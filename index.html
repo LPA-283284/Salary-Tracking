@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maaş Takip (GitHub Senkronize)</title>
+  <style>
+    :root { --bg:#0b1220; --card:#121a2b; --muted:#9fb0d1; --text:#e7eefc; --accent:#6da3ff; --ok:#2ecc71; --warn:#ffb020; --err:#ff5c5c; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:linear-gradient(180deg,#0b1220,#0a0f1a); color:var(--text); }
+    header{ padding:20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    h1{ font-size:20px; margin:0; letter-spacing:.2px; }
+    .chip{ font-size:12px; color:#cfe0ff; padding:4px 8px; background:#0e1a33; border:1px solid #1d2a44; border-radius:999px; }
+    main{ display:grid; grid-template-columns:340px 1fr; gap:18px; padding:18px; }
+    @media (max-width: 980px){ main{ grid-template-columns:1fr; } }
+    .card{ background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+    .card h2{ margin:0 0 12px 0; font-size:16px; color:#d9e7ff; letter-spacing:.2px; }
+    .card .body{ padding:16px; }
+    label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
+    input, select, textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2a395b; background:#0f1728; color:var(--text); outline:none; }
+    input:focus, select:focus, textarea:focus{ border-color:#3756a8; box-shadow:0 0 0 3px rgba(61,109,227,.15); }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btn{ appearance:none; border:none; border-radius:10px; padding:10px 14px; color:#08101f; background:var(--accent); font-weight:600; cursor:pointer; }
+    .btn.secondary{ background:#1a2a4a; color:#d7e6ff; border:1px solid #2d3e64; }
+    .btn.ghost{ background:transparent; color:#cfe0ff; border:1px dashed #2d3e64; }
+    .btn.warn{ background:var(--warn); color:#0b1220; }
+    .btn.ok{ background:var(--ok); color:#061015; }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; }
+    .status{ font-size:12px; color:var(--muted); margin-left:auto; }
+
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ padding:12px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; }
+    th{ font-size:12px; color:#c6d6f7; text-transform:uppercase; letter-spacing:.6px; }
+    td .muted{ color:var(--muted); font-size:13px; }
+    .pill{ padding:4px 8px; border-radius:999px; font-size:12px; display:inline-block; }
+    .amount-pos{ background:#0f2a1b; color:#7ff0b0; border:1px solid #245d3f; }
+    .amount-neg{ background:#2a1515; color:#ffb5b5; border:1px solid #5d2424; }
+    .amount-zero{ background:#1f2637; color:#cfe0ff; border:1px solid #2f3a59; }
+
+    details{ background:#0e1729; border:1px solid #1c2947; border-radius:10px; padding:8px 12px; }
+    summary{ cursor:pointer; color:#cfe0ff; }
+    .payments{ margin-top:8px; }
+    .payments li{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.08); }
+    .payments li:last-child{ border-bottom:none; }
+
+    .hint{ font-size:12px; color:var(--muted); margin-top:8px; }
+    .oktxt{ color:#8ff7be; }
+    .errtxt{ color:#ffacac; }
+    .foot{ padding:10px 16px; font-size:12px; color:#a9b8d8; border-top:1px solid rgba(255,255,255,.06); display:flex; gap:8px; align-items:center; }
+    .tag{ background:#14213a; color:#bfd2ff; padding:4px 8px; border-radius:999px; border:1px solid #223459; font-size:11px; }
+    .ml8{ margin-left:8px; }
+    .mr8{ margin-right:8px; }
+    .hidden{ display:none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>💼 Maaş Takip — GitHub Senkronize</h1>
+    <span class="chip">İki kişi eşzamanlı görünüm</span>
+    <span class="chip">Değişiklik geçmişi = commit</span>
+  </header>
+
+  <main>
+    <!-- AYARLAR -->
+    <section class="card" id="settingsCard">
+      <div class="body">
+        <h2>🔧 Bağlantı ve Güvenlik</h2>
+        <div class="row">
+          <div>
+            <label>GitHub Owner (kullanıcı/organizasyon)</label>
+            <input id="owner" placeholder="ornek: saruhan" />
+          </div>
+          <div>
+            <label>Repo Adı</label>
+            <input id="repo" placeholder="ornek: maas-takip" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Branch</label>
+            <input id="branch" placeholder="main" />
+          </div>
+          <div>
+            <label>Veri Dosyası Yolu</label>
+            <input id="dataPath" placeholder="data/payroll.json" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Para Birimi (ISO)</label>
+            <input id="currency" placeholder="TRY" />
+          </div>
+          <div>
+            <label>İsmin (ödeme yapan olarak düşecek)</label>
+            <input id="yourName" placeholder="ör. Saruhan" />
+          </div>
+        </div>
+        <label>GitHub Token (fine-grained, sadece bu repo için, Contents: Read/Write)</label>
+        <input id="token" type="password" placeholder="ghp_..." />
+        <div class="toolbar" style="margin-top:12px;">
+          <button class="btn" id="connectBtn">Bağlan / Yeniden Bağlan</button>
+          <button class="btn secondary" id="saveSettingsBtn">Ayarları Kaydet</button>
+          <button class="btn ghost" id="clearSettingsBtn">Ayarları Temizle</button>
+          <span class="status" id="status">Hazır</span>
+        </div>
+        <p class="hint">⚠️ Token tarayıcınızın <b>localStorage</b>'ında saklanır ve depoya <b>asla</b> yazılmaz. Güvenlik için bu repo'ya özel, yetkisi kısıtlı <i>fine‑grained</i> token kullanın.</p>
+      </div>
+    </section>
+
+    <!-- ANA UYGULAMA -->
+    <section class="card">
+      <div class="body">
+        <h2>📋 Maaş Listesi</h2>
+        <div class="toolbar">
+          <button class="btn" id="addPersonBtn">Kişi Ekle</button>
+          <button class="btn secondary" id="changeCurrencyBtn">Para Birimini Değiştir</button>
+          <button class="btn secondary" id="refreshBtn">Yenile</button>
+          <button class="btn warn" id="newListBtn">Yeni Liste Başlat</button>
+          <span class="status" id="dataInfo">Bağlı değil</span>
+        </div>
+
+        <div id="tableWrap">
+          <table id="payrollTable">
+            <thead>
+              <tr>
+                <th>Kişi</th>
+                <th>Başlangıç</th>
+                <th>Ödenen</th>
+                <th>Kalan</th>
+                <th style="width:220px">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <p class="hint">İşlemler GitHub'a <span class="oktxt">commit</span> olarak yazılır. Diğer taraf sayfayı açık tuttuğu sürece ~10 sn içinde otomatik güncellenir veya "Yenile" ile anında çekilir.</p>
+      </div>
+      <div class="foot">
+        <span class="tag" id="connectStateTag">Bağlı değil</span>
+        <span class="tag" id="shaTag">sha: —</span>
+        <span class="tag" id="updatedTag">güncel değil</span>
+      </div>
+    </section>
+  </main>
+
+  <template id="rowTpl">
+    <tr>
+      <td>
+        <div><b class="name"></b></div>
+        <div class="muted">ID: <span class="id"></span></div>
+      </td>
+      <td class="initial"></td>
+      <td class="paid"></td>
+      <td class="remain"></td>
+      <td>
+        <div class="toolbar">
+          <button class="btn ok payBtn">Ödeme Ekle</button>
+          <button class="btn secondary historyBtn">Geçmiş</button>
+          <button class="btn ghost editBtn">Düzenle</button>
+        </div>
+        <div class="history hidden"></div>
+      </td>
+    </tr>
+  </template>
+
+  <script>
+    // --------- Yardımcılar ---------
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    function toBase64(str){
+      const bytes = new TextEncoder().encode(str);
+      let bin = '';
+      bytes.forEach(b => bin += String.fromCharCode(b));
+      return btoa(bin);
+    }
+    function fromBase64(b64){
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder().decode(bytes);
+    }
+    const fmt = (n, currency) => new Intl.NumberFormat('tr-TR', { style:'currency', currency: currency||'TRY', maximumFractionDigits:2 }).format(n||0);
+    const uid = () => 'id_' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
+    const nowISO = () => new Date().toISOString();
+
+    // --------- Durum ---------
+    const state = {
+      owner: localStorage.getItem('mt_owner') || '',
+      repo: localStorage.getItem('mt_repo') || '',
+      branch: localStorage.getItem('mt_branch') || 'main',
+      dataPath: localStorage.getItem('mt_dataPath') || 'data/payroll.json',
+      currency: localStorage.getItem('mt_currency') || 'TRY',
+      yourName: localStorage.getItem('mt_yourName') || '',
+      token: localStorage.getItem('mt_token') || '',
+      sha: null,
+      data: null,
+      polling: null,
+      connected: false,
+    };
+
+    // --------- UI başlangıç ---------
+    function syncSettingsUI(){
+      $('#owner').value = state.owner;
+      $('#repo').value = state.repo;
+      $('#branch').value = state.branch;
+      $('#dataPath').value = state.dataPath;
+      $('#currency').value = state.currency;
+      $('#yourName').value = state.yourName;
+      $('#token').value = state.token;
+    }
+    function readSettingsFromUI(){
+      state.owner = $('#owner').value.trim();
+      state.repo = $('#repo').value.trim();
+      state.branch = $('#branch').value.trim() || 'main';
+      state.dataPath = $('#dataPath').value.trim() || 'data/payroll.json';
+      state.currency = $('#currency').value.trim() || 'TRY';
+      state.yourName = $('#yourName').value.trim();
+      state.token = $('#token').value.trim();
+    }
+    function saveSettings(){
+      readSettingsFromUI();
+      localStorage.setItem('mt_owner', state.owner);
+      localStorage.setItem('mt_repo', state.repo);
+      localStorage.setItem('mt_branch', state.branch);
+      localStorage.setItem('mt_dataPath', state.dataPath);
+      localStorage.setItem('mt_currency', state.currency);
+      localStorage.setItem('mt_yourName', state.yourName);
+      if(state.token) localStorage.setItem('mt_token', state.token);
+      $('#status').textContent = 'Ayarlar kaydedildi.';
+    }
+
+    // --------- GitHub API ---------
+    const gh = {
+      async getContents(){
+        const url = `https://api.github.com/repos/${state.owner}/${state.repo}/contents/${state.dataPath}?ref=${encodeURIComponent(state.branch)}`;
+        const r = await fetch(url, { headers: { 'Accept':'application/vnd.github+json', 'Authorization': state.token ? `Bearer ${state.token}` : undefined } });
+        if(r.status === 404) return { notFound:true };
+        if(!r.ok){ throw new Error('GET içerik hata: '+r.status+' '+(await r.text())); }
+        const js = await r.json();
+        return { content: fromBase64(js.content), sha: js.sha };
+      },
+      async putContents(newContent, message, prevSha){
+        const url = `https://api.github.com/repos/${state.owner}/${state.repo}/contents/${state.dataPath}`;
+        const body = { message, content: toBase64(newContent), branch: state.branch };
+        if(prevSha) body.sha = prevSha;
+        const r = await fetch(url, { method:'PUT', headers:{ 'Accept':'application/vnd.github+json', 'Authorization': `Bearer ${state.token}` }, body: JSON.stringify(body) });
+        if(!r.ok){ throw new Error('PUT içerik hata: '+r.status+' '+(await r.text())); }
+        const js = await r.json();
+        return { sha: js.content.sha, commit: js.commit.sha };
+      }
+    };
+
+    // --------- Veri Modeli ---------
+    function emptyData(){
+      return {
+        version: 1,
+        currency: state.currency || 'TRY',
+        updatedAt: nowISO(),
+        items: [] // { id, name, initial, paid:[{amount,date,by,note}] }
+      };
+    }
+    function calc(item){
+      const paid = (item.paid||[]).reduce((s,x)=>s+Number(x.amount||0),0);
+      const remain = Number(item.initial||0) - paid;
+      return { paid, remain };
+    }
+
+    async function connect(){
+      readSettingsFromUI();
+      if(!state.owner || !state.repo){ $('#status').textContent = 'Owner ve repo zorunludur.'; return; }
+      $('#status').textContent = 'Bağlanılıyor…';
+      try{
+        const res = await gh.getContents();
+        if(res.notFound){
+          // Dosya yoksa oluştur
+          const data = emptyData();
+          const { sha } = await gh.putContents(JSON.stringify(data, null, 2), 'Maaş listesi başlat', undefined);
+          state.data = data; state.sha = sha; state.connected = true;
+        } else {
+          state.data = JSON.parse(res.content); state.sha = res.sha; state.connected = true;
+          // Para birimi override edilmediyse UI'ye yaz
+          if(state.data.currency) { state.currency = state.data.currency; $('#currency').value = state.currency; }
+        }
+        $('#status').textContent = 'Bağlandı';
+        $('#connectStateTag').textContent = 'Bağlı';
+        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
+        $('#dataInfo').textContent = `${state.data.items.length} kayıt • ${state.data.currency}`;
+        renderTable();
+        startPolling();
+      }catch(err){
+        console.error(err);
+        $('#status').textContent = 'Hata: '+err.message;
+        $('#connectStateTag').textContent = 'Bağlı değil';
+      }
+    }
+
+    async function saveData(commitMessage){
+      if(!state.connected) return;
+      const payload = JSON.stringify({ ...state.data, currency: state.currency, updatedAt: nowISO() }, null, 2);
+      try{
+        const res = await gh.putContents(payload, commitMessage||'Güncelleme', state.sha);
+        state.sha = res.sha;
+        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
+        $('#updatedTag').textContent = 'güncel';
+      }catch(err){
+        // muhtemel sha çakışması -> tekrar çek
+        console.warn('Kaydetme hatası, yeniden çekiliyor:', err.message);
+        await refresh();
+        // yeniden dene (tek sefer)
+        const res2 = await gh.putContents(payload, commitMessage||'Güncelleme (yeniden deneme)', state.sha);
+        state.sha = res2.sha;
+        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
+        $('#updatedTag').textContent = 'güncel';
+      }
+    }
+
+    async function refresh(){
+      if(!state.connected) return;
+      const res = await gh.getContents();
+      if(res.notFound) return; // olmamalı
+      const newData = JSON.parse(res.content);
+      if(JSON.stringify(newData) !== JSON.stringify(state.data)){
+        state.data = newData; state.sha = res.sha;
+        renderTable();
+        $('#dataInfo').textContent = `${state.data.items.length} kayıt • ${state.data.currency}`;
+        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
+        $('#updatedTag').textContent = 'güncellendi';
+      }
+    }
+
+    function startPolling(){
+      if(state.polling) clearInterval(state.polling);
+      state.polling = setInterval(()=>{ refresh().catch(console.error); }, 10000); // 10 sn
+    }
+
+    // --------- Tablo Render ---------
+    function renderTable(){
+      const tbody = $('#tbody');
+      tbody.innerHTML = '';
+      const currency = state.data?.currency || state.currency || 'TRY';
+      for(const item of (state.data?.items||[])){
+        const row = document.importNode($('#rowTpl').content, true);
+        $('.name', row).textContent = item.name;
+        $('.id', row).textContent = item.id;
+        $('.initial', row).innerHTML = `<span class="pill amount-zero">${fmt(Number(item.initial||0), currency)}</span>`;
+        const { paid, remain } = calc(item);
+        $('.paid', row).innerHTML = `<span class="pill amount-pos">${fmt(paid, currency)}</span>`;
+        const cls = remain>0 ? 'amount-neg' : (remain<0 ? 'amount-pos' : 'amount-zero');
+        $('.remain', row).innerHTML = `<span class="pill ${cls}">${fmt(remain, currency)}</span>`;
+        const histDiv = $('.history', row);
+
+        $('.historyBtn', row).addEventListener('click', ()=>{
+          histDiv.classList.toggle('hidden');
+          if(!histDiv.classList.contains('hidden')){
+            renderHistory(histDiv, item, currency);
+          }
+        });
+        $('.payBtn', row).addEventListener('click', ()=> addPayment(item.id));
+        $('.editBtn', row).addEventListener('click', ()=> editItem(item.id));
+
+        tbody.appendChild(row);
+      }
+      $('#updatedTag').textContent = 'görüntü güncel';
+    }
+
+    function renderHistory(container, item, currency){
+      const list = document.createElement('ul');
+      list.className = 'payments';
+      (item.paid||[]).slice().reverse().forEach(p=>{
+        const li = document.createElement('li');
+        const left = document.createElement('div');
+        left.innerHTML = `<b>${fmt(Number(p.amount||0), currency)}</b> <span class="ml8 muted">${new Date(p.date).toLocaleString('tr-TR')}</span>`;
+        const right = document.createElement('div');
+        right.innerHTML = `<span class="muted">${(p.by||'')}</span> ${p.note?`• ${p.note}`:''}`;
+        li.appendChild(left); li.appendChild(right);
+        list.appendChild(li);
+      });
+      if((item.paid||[]).length===0){
+        const li = document.createElement('div');
+        li.className = 'hint';
+        li.textContent = 'Henüz ödeme yok.';
+        container.innerHTML = ''; container.appendChild(li);
+      } else {
+        container.innerHTML = ''; container.appendChild(list);
+      }
+    }
+
+    // --------- İşlemler ---------
+    async function addPerson(){
+      if(!state.connected) return alert('Önce bağlanın.');
+      const name = prompt('Kişi adı?'); if(!name) return;
+      const initialStr = prompt('Başlangıç tutarı? (ör. 10000)'); if(initialStr==null) return;
+      const initial = Number(initialStr);
+      if(Number.isNaN(initial)) return alert('Geçersiz sayı.');
+      const it = { id: uid(), name, initial, paid: [] };
+      state.data.items.push(it);
+      await saveData(`Kişi eklendi: ${name}`);
+      renderTable();
+    }
+
+    async function editItem(id){
+      const it = state.data.items.find(x=>x.id===id); if(!it) return;
+      const name = prompt('Kişi adı', it.name) || it.name;
+      const initialStr = prompt('Başlangıç tutarı', String(it.initial));
+      if(initialStr==null) return; const initial = Number(initialStr);
+      if(Number.isNaN(initial)) return alert('Geçersiz sayı.');
+      it.name = name; it.initial = initial;
+      await saveData(`Kişi güncellendi: ${name}`);
+      renderTable();
+    }
+
+    async function addPayment(id){
+      if(!state.connected) return alert('Önce bağlanın.');
+      const it = state.data.items.find(x=>x.id===id); if(!it) return;
+      const amountStr = prompt(`${it.name} için ödeme tutarı?`); if(amountStr==null) return;
+      const amount = Number(amountStr); if(Number.isNaN(amount)||amount<=0) return alert('Geçersiz tutar.');
+      const note = prompt('Not (opsiyonel)') || '';
+      it.paid = it.paid || [];
+      it.paid.push({ amount, date: nowISO(), by: state.yourName || '', note });
+      await saveData(`Ödeme: ${it.name} -> ${amount}`);
+      renderTable();
+    }
+
+    async function changeCurrency(){
+      const cur = prompt('Para birimi (ISO, ör. TRY, USD, EUR)', state.data?.currency || state.currency || 'TRY');
+      if(!cur) return; state.currency = cur.toUpperCase();
+      state.data.currency = state.currency;
+      await saveData('Para birimi güncellendi: '+state.currency);
+      renderTable();
+    }
+
+    async function newList(){
+      if(!confirm('Yeni boş liste başlatılsın mı? Tüm mevcut veriler commit geçmişinde kalacak ama liste sıfırlanır.')) return;
+      state.data = emptyData();
+      await saveData('Yeni liste başlatıldı');
+      renderTable();
+    }
+
+    // --------- Etkinlikler ---------
+    $('#connectBtn').addEventListener('click', connect);
+    $('#saveSettingsBtn').addEventListener('click', saveSettings);
+    $('#clearSettingsBtn').addEventListener('click', ()=>{ localStorage.clear(); Object.assign(state,{owner:'',repo:'',branch:'main',dataPath:'data/payroll.json',currency:'TRY',yourName:'',token:''}); syncSettingsUI(); $('#status').textContent='Ayarlar temizlendi.'; });
+    $('#addPersonBtn').addEventListener('click', addPerson);
+    $('#changeCurrencyBtn').addEventListener('click', changeCurrency);
+    $('#refreshBtn').addEventListener('click', ()=> refresh().catch(err=>alert(err.message)) );
+    $('#newListBtn').addEventListener('click', newList);
+
+    // --------- Başlat ---------
+    syncSettingsUI();
+  </script>
+</body>
+</html>
