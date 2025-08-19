@@ -64,13 +64,26 @@ function calc(item){ const paid=(item.paid||[]).reduce((a,b)=>a+b.amount,0); ret
 class GH {
   constructor(o,r,b,p,t){ this.o=o;this.r=r;this.b=b;this.p=p;this.t=t; }
   get api(){ return `https://api.github.com/repos/${this.o}/${this.r}/contents/${this.p}`; }
-  async get(){ const res=await fetch(this.api+`?ref=${this.b}`,{headers:{Authorization:`token ${this.t}`}}); 
-    if(!res.ok) throw new Error(res.status); const j=await res.json(); 
-    return {sha:j.sha,content:JSON.parse(atob(j.content.replace(/\n/g,'')))}; }
+  async get(){ 
+    const res=await fetch(this.api+`?ref=${this.b}`,{headers:{Authorization:`token ${this.t}`}}); 
+    if(!res.ok) throw new Error(res.status); 
+    const j=await res.json(); 
+    return {sha:j.sha,content:JSON.parse(atob(j.content.replace(/\n/g,'')))}; 
+  }
   async put(text,msg,sha){ 
-    const res=await fetch(this.api,{method:'PUT',headers:{Authorization:`token ${this.t}`,'Content-Type':'application/json'}, 
-      body:JSON.stringify({message:msg,branch:this.b,content:btoa(text),sha})}); 
-    if(!res.ok) throw new Error(res.status); return await res.json(); }
+    const res=await fetch(this.api,{
+      method:'PUT',
+      headers:{Authorization:`token ${this.t}`,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        message:msg,
+        branch:this.b,
+        content:btoa(unescape(encodeURIComponent(text))), // ✅ UTF-8 fix
+        sha
+      })
+    }); 
+    if(!res.ok) throw new Error(res.status); 
+    return await res.json(); 
+  }
 }
 
 async function connect(){
