@@ -1,4 +1,11 @@
 {
-  "items": [],
+  "items": [
+    {
+      "id": "mibc09a",
+      "name": "Saruhan",
+      "initial": 1000,
+      "paid": []
+    }
+  ],
   "currency": "GBP"
 }
