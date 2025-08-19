@@ -375,3 +375,13 @@
 
   // End of extended script
 </script>
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey && e.key === 's'){ 
+    e.preventDefault(); 
+    saveData('Manual save'); 
+  }
+  if(e.ctrlKey && e.key === 'f'){ 
+    e.preventDefault(); 
+    filterByName(); 
+  }
+});
