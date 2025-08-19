@@ -1,6 +1,13 @@
 {
   "version": 1,
   "currency": "GBP",
-  "updatedAt": "2025-08-19T14:56:58.368Z",
-  "items": []
+  "updatedAt": "2025-08-19T15:02:25.118Z",
+  "items": [
+    {
+      "id": "id_bsurdfaan2",
+      "name": "Saruhan",
+      "initial": 1000,
+      "paid": []
+    }
+  ]
 }
