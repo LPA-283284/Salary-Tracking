@@ -2,62 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Salary Tracker</title>
+  <title>Salary Tracker (Lite)</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
     th { background: #f0f0f0; }
     .btn { margin: 4px; padding: 6px 10px; }
     details { margin-top: 20px; }
-    .hidden { display: none; }
-    .muted { color: #888; font-size: 0.9em; }
-    .pill { padding: 2px 6px; border-radius: 8px; }
-    .amount-neg { background: #fdd; }
-    .amount-pos { background: #dfd; }
-    .amount-zero { background: #eee; }
-    ul.payments { list-style: none; padding-left: 0; }
-    ul.payments li { margin-bottom: 4px; }
   </style>
 </head>
 <body>
 
   <h2>💰 Salary List</h2>
-  <table id="salaryTable">
+  <table>
     <thead>
       <tr>
-        <th>Name</th>
-        <th>ID</th>
-        <th>Initial</th>
-        <th>Paid</th>
-        <th>Remain</th>
-        <th>Actions</th>
+        <th>Name</th><th>ID</th><th>Initial</th><th>Paid</th><th>Remain</th><th>Actions</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
 
   <button id="addPersonBtn" class="btn">➕ Add Person</button>
-  <button id="newListBtn" class="btn">🆕 New List</button>
   <button id="refreshBtn" class="btn">🔄 Refresh</button>
-  <button id="changeCurrencyBtn" class="btn">💱 Change Currency</button>
 
   <details>
-    <summary>⚙️ Connection & Security (click to expand)</summary>
-    <div>
-      <label>Owner: <input id="ownerInput"></label><br>
-      <label>Repo: <input id="repoInput"></label><br>
-      <label>Branch: <input id="branchInput" value="main"></label><br>
-      <label>Data File Path: <input id="pathInput" value="payroll.json"></label><br>
-      <label>Your Name: <input id="nameInput"></label><br>
-      <label>GitHub Token: <input id="tokenInput" type="password"></label><br>
-      <button id="connectBtn" class="btn">🔌 Connect</button>
-      <button id="saveSettingsBtn" class="btn">💾 Save Settings</button>
-      <button id="clearSettingsBtn" class="btn">🗑️ Clear Settings</button>
-      <div id="status"></div>
-      <div id="shaTag"></div>
-      <div id="updatedTag"></div>
-    </div>
+    <summary>⚙️ Connection</summary>
+    <label>Owner: <input id="ownerInput"></label><br>
+    <label>Repo: <input id="repoInput"></label><br>
+    <label>Branch: <input id="branchInput" value="main"></label><br>
+    <label>Path: <input id="pathInput" value="payroll.json"></label><br>
+    <label>Your Name: <input id="nameInput"></label><br>
+    <label>Token: <input id="tokenInput" type="password"></label><br>
+    <button id="connectBtn" class="btn">🔌 Connect</button>
+    <div id="status"></div>
   </details>
 
   <template id="rowTpl">
@@ -68,320 +47,92 @@
       <td class="paid"></td>
       <td class="remain"></td>
       <td>
-        <button class="editBtn btn">✏️ Edit</button>
-        <button class="payBtn btn">💵 Pay</button>
-        <button class="historyBtn btn">📜 History</button>
+        <button class="editBtn btn">✏️</button>
+        <button class="payBtn btn">💵</button>
       </td>
-      <td colspan="6" class="history hidden"></td>
     </tr>
   </template>
 
-  <script>
-    const $ = (sel, el=document)=>el.querySelector(sel);
-    const $$ = (sel, el=document)=>[...el.querySelectorAll(sel)];
-    const state = { data: { items:[], currency:'USD', updatedAt:'' }, sha:null, polling:null };
+<script>
+const $ = (s,el=document)=>el.querySelector(s);
+const state = { data:{items:[],currency:'USD'}, sha:null };
+let gh;
 
-    function uid(){ return Math.random().toString(36).slice(2,9); }
-    function nowISO(){ return new Date().toISOString(); }
-    function fmt(n,c){ return (n||0).toLocaleString(undefined,{style:'currency',currency:c}); }
-    function calc(item){
-      const paid = (item.paid||[]).reduce((a,b)=>a+b.amount,0);
-      return { paid, remain: item.initial - paid };
-    }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function fmt(n,c){ return (n||0).toLocaleString(undefined,{style:'currency',currency:c}); }
+function calc(item){ const paid=(item.paid||[]).reduce((a,b)=>a+b.amount,0); return {paid,remain:item.initial-paid}; }
 
-    class GH {
-      constructor(owner, repo, branch, path, token){
-        this.owner=owner; this.repo=repo; this.branch=branch; this.path=path; this.token=token;
-        this.api=`https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-      }
-      async getContents(){
-        const res = await fetch(this.api+`?ref=${this.branch}`, { headers:{ Authorization:`token ${this.token}` } });
-        if(!res.ok) throw new Error('Get failed '+res.status);
-        const json = await res.json();
-        return { sha:json.sha, content: JSON.parse(atob(json.content.replace(/\n/g,''))) };
-      }
-      async putContents(text,message,sha){
-        const res = await fetch(this.api,{
-          method:'PUT',
-          headers:{ Authorization:`token ${this.token}`,'Content-Type':'application/json' },
-          body: JSON.stringify({ message, branch:this.branch, content:btoa(text), sha })
-        });
-        if(!res.ok) throw new Error('Put failed '+res.status);
-        return await res.json();
-      }
-    }
+class GH {
+  constructor(o,r,b,p,t){ this.o=o;this.r=r;this.b=b;this.p=p;this.t=t; }
+  get api(){ return `https://api.github.com/repos/${this.o}/${this.r}/contents/${this.p}`; }
+  async get(){ const res=await fetch(this.api+`?ref=${this.b}`,{headers:{Authorization:`token ${this.t}`}}); 
+    if(!res.ok) throw new Error(res.status); const j=await res.json(); 
+    return {sha:j.sha,content:JSON.parse(atob(j.content.replace(/\\n/g,'')))}; }
+  async put(text,msg,sha){ 
+    const res=await fetch(this.api,{method:'PUT',headers:{Authorization:`token ${this.t}`,'Content-Type':'application/json'}, 
+      body:JSON.stringify({message:msg,branch:this.b,content:btoa(text),sha})}); 
+    if(!res.ok) throw new Error(res.status); return await res.json(); }
+}
 
-    function syncSettingsUI(){
-      $('#ownerInput').value = localStorage.owner||'';
-      $('#repoInput').value = localStorage.repo||'';
-      $('#branchInput').value = localStorage.branch||'main';
-      $('#pathInput').value = localStorage.path||'payroll.json';
-      $('#nameInput').value = localStorage.yourName||'';
-      $('#tokenInput').value = localStorage.token||'';
-    }
+async function connect(){
+  try{
+    const o=$('#ownerInput').value.trim(), r=$('#repoInput').value.trim();
+    const b=$('#branchInput').value.trim(), p=$('#pathInput').value.trim();
+    const n=$('#nameInput').value.trim(), t=$('#tokenInput').value.trim();
+    state.yourName=n; gh=new GH(o,r,b,p,t);
+    const {sha,content}=await gh.get(); state.sha=sha; state.data=content; render();
+    $('#status').textContent='Connected ✔';
+  }catch(e){ $('#status').textContent='Connect error '+e.message; }
+}
 
-    function saveSettings(){
-      localStorage.owner=$('#ownerInput').value.trim();
-      localStorage.repo=$('#repoInput').value.trim();
-      localStorage.branch=$('#branchInput').value.trim();
-      localStorage.path=$('#pathInput').value.trim();
-      localStorage.yourName=$('#nameInput').value.trim();
-      localStorage.token=$('#tokenInput').value.trim();
-      alert('Settings saved.');
-    }
+async function save(msg){
+  try{
+    const {sha}=await gh.put(JSON.stringify(state.data,null,2),msg,state.sha);
+    state.sha=sha; $('#status').textContent='Saved ✔';
+  }catch(e){ alert('Save error '+e.message); }
+}
 
-    let gh;
-    async function connect(){
-      gbp{
-        state.owner=$('#ownerInput').value.trim();
-        state.repo=$('#repoInput').value.trim();
-        state.branch=$('#branchInput').value.trim();
-        state.path=$('#pathInput').value.trim();
-        state.yourName=$('#nameInput').value.trim();
-        const token=$('#tokenInput').value.trim();
-        gh=new GH(state.owner,state.repo,state.branch,state.path,token);
-        const { sha, content } = await gh.getContents();
-        state.sha=sha; state.data=content;
-        $('#shaTag').textContent='sha: '+(state.sha?.slice(0,7)||'—');
-        $('#updatedTag').textContent='updated: '+new Date().toLocaleTimeString();
-        renderTable(); startPolling();
-      }catch(e){
-        $('#status').textContent='Connect error: '+e.message;
-        console.error(e);
-      }
-    }
+function render(){
+  const tb=$('#tbody'); tb.innerHTML='';
+  state.data.items.forEach(item=>{
+    const row=document.importNode($('#rowTpl').content,true);
+    $('.name',row).textContent=item.name;
+    $('.id',row).textContent=item.id;
+    const {paid,remain}=calc(item);
+    $('.initial',row).textContent=fmt(item.initial,state.data.currency);
+    $('.paid',row).textContent=fmt(paid,state.data.currency);
+    $('.remain',row).textContent=fmt(remain,state.data.currency);
+    $('.editBtn',row).onclick=()=>edit(item.id);
+    $('.payBtn',row).onclick=()=>pay(item.id);
+    tb.appendChild(row);
+  });
+}
 
-    async function saveData(message){
-      gbp{
-        const { sha } = await gh.putContents(JSON.stringify(state.data,null,2), message, state.sha);
-        state.sha=sha;
-        $('#shaTag').textContent='sha: '+(state.sha?.slice(0,7)||'—');
-        $('#updatedTag').textContent='updated: '+new Date().toLocaleTimeString();
-      }catch(e){
-        alert('Save error: '+e.message);
-        console.error(e);
-      }
-    }
+function addPerson(){
+  const n=prompt('Name?'); if(!n) return;
+  const init=parseFloat(prompt('Initial amount?','0'))||0;
+  state.data.items.push({id:uid(),name:n,initial:init,paid:[]});
+  save('Add person '+n); render();
+}
 
-    function renderTable(){
-      const tbody=$('#tbody');
-      tbody.innerHTML='';
-      (state.data.items||[]).forEach(item=>{
-        const row=document.importNode($('#rowTpl').content,true);
-        $('.name',row).textContent=item.name;
-        $('.id',row).textContent=item.id;
-        const { paid, remain }=calc(item);
-        $('.initial',row).textContent=fmt(item.initial,state.data.currency);
-        $('.paid',row).textContent=fmt(paid,state.data.currency);
-        const remainCell=$('.remain',row);
-        remainCell.textContent=fmt(remain,state.data.currency);
-        if(remain>0) remainCell.className='remain pill amount-neg';
-        else if(remain<0) remainCell.className='remain pill amount-pos';
-        else remainCell.className='remain pill amount-zero';
+function edit(id){
+  const it=state.data.items.find(x=>x.id===id); if(!it) return;
+  const n=prompt('Name:',it.name); if(!n) return;
+  const init=parseFloat(prompt('Initial amount:',it.initial))||0;
+  it.name=n; it.initial=init; save('Edit '+n); render();
+}
 
-        const histDiv=$('.history',row);
-        $('.historyBtn',row).onclick=()=>{
-          if(histDiv.classList.contains('hidden')){
-            histDiv.innerHTML=renderHistory(item);
-            histDiv.classList.remove('hidden');
-          }else{
-            histDiv.classList.add('hidden');
-          }
-        };
-        $('.editBtn',row).onclick=()=>editPerson(item.id);
-        $('.payBtn',row).onclick=()=>addPayment(item.id);
-        tbody.appendChild(row);
-      });
-    }
+function pay(id){
+  const it=state.data.items.find(x=>x.id===id); if(!it) return;
+  const amt=parseFloat(prompt('Payment?','0'))||0; if(!amt) return;
+  const note=prompt('Note:','')||'';
+  it.paid.push({amount:amt,date:new Date().toISOString(),by:state.yourName,note});
+  save('Payment '+it.name+' '+amt); render();
+}
 
-    function renderHistory(item){
-      if(!item.paid||!item.paid.length) return '<div class="muted">No payments yet.</div>';
-      return `<ul class="payments">${item.paid.map(p=>`<li><span>${fmt(p.amount,state.data.currency)} by ${p.by} <span class="muted">${new Date(p.date).toLocaleString()}</span></span><span>${p.note||''}</span></li>`).join('')}</ul>`;
-    }
-
-    function addPerson(){
-      const name=prompt('Person name?'); if(!name) return;
-      const initial=parseFloat(prompt('Initial amount?','0'))||0;
-      const item={id:uid(),name,initial,paid:[]};
-      state.data.items.push(item);
-      state.data.updatedAt=nowISO();
-      saveData('Add person: '+name);
-      renderTable();
-    }
-
-    function editPerson(id){
-      const item=state.data.items.find(x=>x.id===id); if(!item) return;
-      const name=prompt('Edit name:',item.name); if(!name) return;
-      const initial=parseFloat(prompt('Edit initial amount:',item.initial))||0;
-      item.name=name; item.initial=initial;
-      state.data.updatedAt=nowISO();
-      saveData('Edit person: '+name);
-      renderTable();
-    }
-
-    function addPayment(id){
-      const item=state.data.items.find(x=>x.id===id); if(!item) return;
-      const amt=parseFloat(prompt('Payment amount?','0'))||0; if(!amt) return;
-      const note=prompt('Note (optional):','')||'';
-      item.paid.push({amount:amt,date:nowISO(),by:state.yourName||'?',note});
-      state.data.updatedAt=nowISO();
-      saveData('Add payment: '+item.name+' '+amt);
-      renderTable();
-    }
-
-    function startPolling(){
-      if(state.polling) clearInterval(state.polling);
-      state.polling=setInterval(async()=>{
-        gbp{
-          const res=await gh.getContents();
-          if(res.sha!==state.sha){
-            state.data=res.content;
-            state.sha=res.sha;
-            renderTable();
-            $('#updatedTag').textContent='updated: '+new Date().toLocaleTimeString();
-          }
-        }catch(e){ console.warn('Polling error',e); }
-      },10000);
-    }
-
-    $('#addPersonBtn').onclick=()=>addPerson();
-    $('#newListBtn').onclick=()=>{ if(confirm('Start a new empty list?')){ state.data={items:[],currency:'USD',updatedAt:nowISO()}; saveData('Start new list'); renderTable(); } };
-    $('#refreshBtn').onclick=()=>connect();
-    $('#changeCurrencyBtn').onclick=()=>{ const cur=prompt('Currency code (ISO)?',state.data.currency||'USD'); if(!cur) return; state.data.currency=cur; saveData('Change currency to '+cur); renderTable(); };
-    $('#connectBtn').onclick=()=>connect();
-    $('#saveSettingsBtn').onclick=()=>saveSettings();
-    $('#clearSettingsBtn').onclick=()=>{ if(confirm('Clear local settings?')){ localStorage.clear(); location.reload(); } };
-
-    syncSettingsUI();
-    if(localStorage.owner&&localStorage.repo){ connect(); }
-  </script>
-
+$('#addPersonBtn').onclick=()=>addPerson();
+$('#refreshBtn').onclick=()=>connect();
+$('#connectBtn').onclick=()=>connect();
+</script>
 </body>
 </html>
-<script>
-  // --- CONTINUED SCRIPT (PART 2) ---
-
-  function deletePerson(id){
-    if(!confirm('Delete this person?')) return;
-    state.data.items = state.data.items.filter(x=>x.id!==id);
-    state.data.updatedAt=nowISO();
-    saveData('Delete person');
-    renderTable();
-  }
-
-  function exportData(){
-    const blob = new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='payroll.json';
-    a.click();
-  }
-
-  function importData(evt){
-    const file=evt.target.files[0];
-    if(!file) return;
-    const reader=new FileReader();
-    reader.onload=()=>{
-      gbp{
-        state.data=JSON.parse(reader.result);
-        state.data.updatedAt=nowISO();
-        saveData('Import data');
-        renderTable();
-      }catch(e){ alert('Invalid file'); }
-    };
-    reader.readAsText(file);
-  }
-
-  // Extra UI buttons for import/export
-  const exportBtn=document.createElement('button');
-  exportBtn.textContent='📤 Export';
-  exportBtn.className='btn';
-  exportBtn.onclick=()=>exportData();
-  document.body.insertBefore(exportBtn,$('#addPersonBtn'));
-
-  const importInput=document.createElement('input');
-  importInput.type='file';
-  importInput.className='hidden';
-  importInput.onchange=(e)=>importData(e);
-
-  const importBtn=document.createElement('button');
-  importBtn.textContent='📥 Import';
-  importBtn.className='btn';
-  importBtn.onclick=()=>importInput.click();
-  document.body.insertBefore(importBtn,$('#addPersonBtn'));
-  document.body.appendChild(importInput);
-
-  // Allow delete person action
-  document.addEventListener('click',e=>{
-    if(e.target.classList.contains('deleteBtn')){
-      const id=e.target.dataset.id;
-      deletePerson(id);
-    }
-  });
-<script>
-  // --- CONTINUED SCRIPT (PART 3) ---
-
-  function filterByName(){
-    const q = prompt('Search by name:');
-    if(!q) return renderTable();
-    const tbody=$('#tbody');
-    tbody.innerHTML='';
-    (state.data.items||[]).filter(x=>x.name.toLowerCase().includes(q.toLowerCase())).forEach(item=>{
-      const row=document.importNode($('#rowTpl').content,true);
-      $('.name',row).textContent=item.name;
-      $('.id',row).textContent=item.id;
-      const { paid, remain }=calc(item);
-      $('.initial',row).textContent=fmt(item.initial,state.data.currency);
-      $('.paid',row).textContent=fmt(paid,state.data.currency);
-      $('.remain',row).textContent=fmt(remain,state.data.currency);
-      tbody.appendChild(row);
-    });
-  }
-
-  const filterBtn=document.createElement('button');
-  filterBtn.textContent='🔍 Search';
-  filterBtn.className='btn';
-  filterBtn.onclick=()=>filterByName();
-  document.body.insertBefore(filterBtn,$('#addPersonBtn'));
-
-  // Local backup
-  function backupLocal(){
-    localStorage.backup=JSON.stringify(state.data);
-  }
-
-  function restoreLocal(){
-    if(!localStorage.backup){ alert('No backup'); return; }
-    state.data=JSON.parse(localStorage.backup);
-    renderTable();
-  }
-
-  const backupBtn=document.createElement('button');
-  backupBtn.textContent='💾 Backup Local';
-  backupBtn.className='btn';
-  backupBtn.onclick=()=>backupLocal();
-  document.body.insertBefore(backupBtn,$('#addPersonBtn'));
-
-  const restoreBtn=document.createElement('button');
-  restoreBtn.textContent='♻️ Restore Local';
-  restoreBtn.className='btn';
-  restoreBtn.onclick=()=>restoreLocal();
-  document.body.insertBefore(restoreBtn,$('#addPersonBtn'));
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown',e=>{
-    if(e.ctrlKey && e.key==='s'){ e.preventDefault(); saveData('Manual save'); }
-    if(e.ctrlKey && e.key==='f'){ e.preventDefault(); filterByName(); }
-  });
-
-  // End of extended script
-</script>
-document.addEventListener('keydown', e => {
-  if(e.ctrlKey && e.key === 's'){ 
-    e.preventDefault(); 
-    saveData('Manual save'); 
-  }
-  if(e.ctrlKey && e.key === 'f'){ 
-    e.preventDefault(); 
-    filterByName(); 
-  }
-});
