@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Maaş Takip (GitHub Senkronize)</title>
+  <title>Salary Tracker (GitHub Synced)</title>
   <style>
     :root { --bg:#0b1220; --card:#121a2b; --muted:#9fb0d1; --text:#e7eefc; --accent:#6da3ff; --ok:#2ecc71; --warn:#ffb020; --err:#ff5c5c; }
     *{ box-sizing:border-box; }
@@ -56,24 +56,24 @@
 </head>
 <body>
   <header>
-    <h1>💼 Maaş Takip — GitHub Senkronize</h1>
-    <span class="chip">İki kişi eşzamanlı görünüm</span>
-    <span class="chip">Değişiklik geçmişi = commit</span>
+    <h1>💼 Salary Tracker — GitHub Synced</h1>
+    <span class="chip">Two users real-time view</span>
+    <span class="chip">Change history = commit</span>
   </header>
 
   <main>
-    <!-- AYARLAR -->
+    <!-- SETTINGS -->
     <section class="card" id="settingsCard">
       <div class="body">
-        <h2>🔧 Bağlantı ve Güvenlik</h2>
+        <h2>🔧 Connection & Security</h2>
         <div class="row">
           <div>
-            <label>GitHub Owner (kullanıcı/organizasyon)</label>
-            <input id="owner" placeholder="ornek: saruhan" />
+            <label>GitHub Owner (user/organization)</label>
+            <input id="owner" placeholder="e.g. saruhan" />
           </div>
           <div>
-            <label>Repo Adı</label>
-            <input id="repo" placeholder="ornek: maas-takip" />
+            <label>Repository Name</label>
+            <input id="repo" placeholder="e.g. salary-tracker" />
           </div>
         </div>
         <div class="row">
@@ -82,65 +82,65 @@
             <input id="branch" placeholder="main" />
           </div>
           <div>
-            <label>Veri Dosyası Yolu</label>
+            <label>Data File Path</label>
             <input id="dataPath" placeholder="data/payroll.json" />
           </div>
         </div>
         <div class="row">
           <div>
-            <label>Para Birimi (ISO)</label>
+            <label>Currency (ISO)</label>
             <input id="currency" placeholder="TRY" />
           </div>
           <div>
-            <label>İsmin (ödeme yapan olarak düşecek)</label>
-            <input id="yourName" placeholder="ör. Saruhan" />
+            <label>Your Name (for payment records)</label>
+            <input id="yourName" placeholder="e.g. Saruhan" />
           </div>
         </div>
-        <label>GitHub Token (fine-grained, sadece bu repo için, Contents: Read/Write)</label>
+        <label>GitHub Token (fine-grained, only this repo, Contents: Read/Write)</label>
         <input id="token" type="password" placeholder="ghp_..." />
         <div class="toolbar" style="margin-top:12px;">
-          <button class="btn" id="connectBtn">Bağlan / Yeniden Bağlan</button>
-          <button class="btn secondary" id="saveSettingsBtn">Ayarları Kaydet</button>
-          <button class="btn ghost" id="clearSettingsBtn">Ayarları Temizle</button>
-          <span class="status" id="status">Hazır</span>
+          <button class="btn" id="connectBtn">Connect / Reconnect</button>
+          <button class="btn secondary" id="saveSettingsBtn">Save Settings</button>
+          <button class="btn ghost" id="clearSettingsBtn">Clear Settings</button>
+          <span class="status" id="status">Ready</span>
         </div>
-        <p class="hint">⚠️ Token tarayıcınızın <b>localStorage</b>'ında saklanır ve depoya <b>asla</b> yazılmaz. Güvenlik için bu repo'ya özel, yetkisi kısıtlı <i>fine‑grained</i> token kullanın.</p>
+        <p class="hint">⚠️ Token is stored in your <b>localStorage</b> and <b>never</b> written to the repo. For security, use a repo-specific, limited-scope <i>fine-grained</i> token.</p>
       </div>
     </section>
 
-    <!-- ANA UYGULAMA -->
+    <!-- MAIN APP -->
     <section class="card">
       <div class="body">
-        <h2>📋 Maaş Listesi</h2>
+        <h2>📋 Salary List</h2>
         <div class="toolbar">
-          <button class="btn" id="addPersonBtn">Kişi Ekle</button>
-          <button class="btn secondary" id="changeCurrencyBtn">Para Birimini Değiştir</button>
-          <button class="btn secondary" id="refreshBtn">Yenile</button>
-          <button class="btn warn" id="newListBtn">Yeni Liste Başlat</button>
-          <span class="status" id="dataInfo">Bağlı değil</span>
+          <button class="btn" id="addPersonBtn">Add Person</button>
+          <button class="btn secondary" id="changeCurrencyBtn">Change Currency</button>
+          <button class="btn secondary" id="refreshBtn">Refresh</button>
+          <button class="btn warn" id="newListBtn">Start New List</button>
+          <span class="status" id="dataInfo">Not connected</span>
         </div>
 
         <div id="tableWrap">
           <table id="payrollTable">
             <thead>
               <tr>
-                <th>Kişi</th>
-                <th>Başlangıç</th>
-                <th>Ödenen</th>
-                <th>Kalan</th>
-                <th style="width:220px">İşlemler</th>
+                <th>Person</th>
+                <th>Initial</th>
+                <th>Paid</th>
+                <th>Remaining</th>
+                <th style="width:220px">Actions</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
 
-        <p class="hint">İşlemler GitHub'a <span class="oktxt">commit</span> olarak yazılır. Diğer taraf sayfayı açık tuttuğu sürece ~10 sn içinde otomatik güncellenir veya "Yenile" ile anında çekilir.</p>
+        <p class="hint">Operations are written to GitHub as <span class="oktxt">commits</span>. Other user will see changes in ~10s automatically, or instantly by pressing "Refresh".</p>
       </div>
       <div class="foot">
-        <span class="tag" id="connectStateTag">Bağlı değil</span>
+        <span class="tag" id="connectStateTag">Not connected</span>
         <span class="tag" id="shaTag">sha: —</span>
-        <span class="tag" id="updatedTag">güncel değil</span>
+        <span class="tag" id="updatedTag">not updated</span>
       </div>
     </section>
   </main>
@@ -156,9 +156,9 @@
       <td class="remain"></td>
       <td>
         <div class="toolbar">
-          <button class="btn ok payBtn">Ödeme Ekle</button>
-          <button class="btn secondary historyBtn">Geçmiş</button>
-          <button class="btn ghost editBtn">Düzenle</button>
+          <button class="btn ok payBtn">Add Payment</button>
+          <button class="btn secondary historyBtn">History</button>
+          <button class="btn ghost editBtn">Edit</button>
         </div>
         <div class="history hidden"></div>
       </td>
@@ -166,7 +166,7 @@
   </template>
 
   <script>
-    // --------- Yardımcılar ---------
+    // --------- Helpers ---------
     const $ = (sel, el=document) => el.querySelector(sel);
     const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
 
@@ -182,17 +182,17 @@
       for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
       return new TextDecoder().decode(bytes);
     }
-    const fmt = (n, currency) => new Intl.NumberFormat('tr-TR', { style:'currency', currency: currency||'TRY', maximumFractionDigits:2 }).format(n||0);
+    const fmt = (n, currency) => new Intl.NumberFormat('en-US', { style:'currency', currency: currency||'USD', maximumFractionDigits:2 }).format(n||0);
     const uid = () => 'id_' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
     const nowISO = () => new Date().toISOString();
 
-    // --------- Durum ---------
+    // --------- State ---------
     const state = {
       owner: localStorage.getItem('mt_owner') || '',
       repo: localStorage.getItem('mt_repo') || '',
       branch: localStorage.getItem('mt_branch') || 'main',
       dataPath: localStorage.getItem('mt_dataPath') || 'data/payroll.json',
-      currency: localStorage.getItem('mt_currency') || 'TRY',
+      currency: localStorage.getItem('mt_currency') || 'USD',
       yourName: localStorage.getItem('mt_yourName') || '',
       token: localStorage.getItem('mt_token') || '',
       sha: null,
@@ -201,7 +201,7 @@
       connected: false,
     };
 
-    // --------- UI başlangıç ---------
+    // --------- UI init ---------
     function syncSettingsUI(){
       $('#owner').value = state.owner;
       $('#repo').value = state.repo;
@@ -216,7 +216,7 @@
       state.repo = $('#repo').value.trim();
       state.branch = $('#branch').value.trim() || 'main';
       state.dataPath = $('#dataPath').value.trim() || 'data/payroll.json';
-      state.currency = $('#currency').value.trim() || 'TRY';
+      state.currency = $('#currency').value.trim() || 'USD';
       state.yourName = $('#yourName').value.trim();
       state.token = $('#token').value.trim();
     }
@@ -229,7 +229,7 @@
       localStorage.setItem('mt_currency', state.currency);
       localStorage.setItem('mt_yourName', state.yourName);
       if(state.token) localStorage.setItem('mt_token', state.token);
-      $('#status').textContent = 'Ayarlar kaydedildi.';
+      $('#status').textContent = 'Settings saved.';
     }
 
     // --------- GitHub API ---------
@@ -238,7 +238,7 @@
         const url = `https://api.github.com/repos/${state.owner}/${state.repo}/contents/${state.dataPath}?ref=${encodeURIComponent(state.branch)}`;
         const r = await fetch(url, { headers: { 'Accept':'application/vnd.github+json', 'Authorization': state.token ? `Bearer ${state.token}` : undefined } });
         if(r.status === 404) return { notFound:true };
-        if(!r.ok){ throw new Error('GET içerik hata: '+r.status+' '+(await r.text())); }
+        if(!r.ok){ throw new Error('GET content error: '+r.status+' '+(await r.text())); }
         const js = await r.json();
         return { content: fromBase64(js.content), sha: js.sha };
       },
@@ -247,17 +247,17 @@
         const body = { message, content: toBase64(newContent), branch: state.branch };
         if(prevSha) body.sha = prevSha;
         const r = await fetch(url, { method:'PUT', headers:{ 'Accept':'application/vnd.github+json', 'Authorization': `Bearer ${state.token}` }, body: JSON.stringify(body) });
-        if(!r.ok){ throw new Error('PUT içerik hata: '+r.status+' '+(await r.text())); }
+        if(!r.ok){ throw new Error('PUT content error: '+r.status+' '+(await r.text())); }
         const js = await r.json();
         return { sha: js.content.sha, commit: js.commit.sha };
       }
     };
 
-    // --------- Veri Modeli ---------
+    // --------- Data Model ---------
     function emptyData(){
       return {
         version: 1,
-        currency: state.currency || 'TRY',
+        currency: state.currency || 'USD',
         updatedAt: nowISO(),
         items: [] // { id, name, initial, paid:[{amount,date,by,note}] }
       };
@@ -270,186 +270,159 @@
 
     async function connect(){
       readSettingsFromUI();
-      if(!state.owner || !state.repo){ $('#status').textContent = 'Owner ve repo zorunludur.'; return; }
-      $('#status').textContent = 'Bağlanılıyor…';
+      if(!state.owner || !state.repo){ $('#status').textContent = 'Owner and repo required.'; return; }
+      $('#status').textContent = 'Connecting…';
       try{
         const res = await gh.getContents();
         if(res.notFound){
-          // Dosya yoksa oluştur
           const data = emptyData();
-          const { sha } = await gh.putContents(JSON.stringify(data, null, 2), 'Maaş listesi başlat', undefined);
+          const { sha } = await gh.putContents(JSON.stringify(data, null, 2), 'Initialize salary list', undefined);
           state.data = data; state.sha = sha; state.connected = true;
         } else {
           state.data = JSON.parse(res.content); state.sha = res.sha; state.connected = true;
-          // Para birimi override edilmediyse UI'ye yaz
           if(state.data.currency) { state.currency = state.data.currency; $('#currency').value = state.currency; }
         }
-        $('#status').textContent = 'Bağlandı';
-        $('#connectStateTag').textContent = 'Bağlı';
+        $('#status').textContent = 'Connected';
+        $('#connectStateTag').textContent = 'Connected';
         $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
-        $('#dataInfo').textContent = `${state.data.items.length} kayıt • ${state.data.currency}`;
+```html
+        $('#updatedTag').textContent = 'updated: ' + new Date().toLocaleTimeString();
         renderTable();
         startPolling();
-      }catch(err){
-        console.error(err);
-        $('#status').textContent = 'Hata: '+err.message;
-        $('#connectStateTag').textContent = 'Bağlı değil';
+      } catch(e){
+        $('#status').textContent = 'Connect error: ' + e.message;
+        console.error(e);
       }
     }
 
-    async function saveData(commitMessage){
-      if(!state.connected) return;
-      const payload = JSON.stringify({ ...state.data, currency: state.currency, updatedAt: nowISO() }, null, 2);
+    async function saveData(message){
       try{
-        const res = await gh.putContents(payload, commitMessage||'Güncelleme', state.sha);
-        state.sha = res.sha;
+        const { sha } = await gh.putContents(JSON.stringify(state.data,null,2), message, state.sha);
+        state.sha = sha;
         $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
-        $('#updatedTag').textContent = 'güncel';
-      }catch(err){
-        // muhtemel sha çakışması -> tekrar çek
-        console.warn('Kaydetme hatası, yeniden çekiliyor:', err.message);
-        await refresh();
-        // yeniden dene (tek sefer)
-        const res2 = await gh.putContents(payload, commitMessage||'Güncelleme (yeniden deneme)', state.sha);
-        state.sha = res2.sha;
-        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
-        $('#updatedTag').textContent = 'güncel';
+        $('#updatedTag').textContent = 'updated: ' + new Date().toLocaleTimeString();
+      }catch(e){
+        alert('Save error: '+e.message);
+        console.error(e);
       }
     }
 
-    async function refresh(){
-      if(!state.connected) return;
-      const res = await gh.getContents();
-      if(res.notFound) return; // olmamalı
-      const newData = JSON.parse(res.content);
-      if(JSON.stringify(newData) !== JSON.stringify(state.data)){
-        state.data = newData; state.sha = res.sha;
-        renderTable();
-        $('#dataInfo').textContent = `${state.data.items.length} kayıt • ${state.data.currency}`;
-        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
-        $('#updatedTag').textContent = 'güncellendi';
-      }
+    function renderTable(){
+      const tbody = $('#tbody');
+      tbody.innerHTML = '';
+      (state.data.items||[]).forEach(item => {
+        const row = document.importNode($('#rowTpl').content, true);
+        $('.name', row).textContent = item.name;
+        $('.id', row).textContent = item.id;
+        const { paid, remain } = calc(item);
+        $('.initial', row).textContent = fmt(item.initial, state.data.currency);
+        $('.paid', row).textContent = fmt(paid, state.data.currency);
+        const remainCell = $('.remain', row);
+        remainCell.textContent = fmt(remain, state.data.currency);
+        if(remain>0) remainCell.className='remain pill amount-neg';
+        else if(remain<0) remainCell.className='remain pill amount-pos';
+        else remainCell.className='remain pill amount-zero';
+
+        const histDiv = $('.history', row);
+        $('.historyBtn', row).onclick = ()=>{
+          if(histDiv.classList.contains('hidden')){
+            histDiv.innerHTML = renderHistory(item);
+            histDiv.classList.remove('hidden');
+          }else{
+            histDiv.classList.add('hidden');
+          }
+        };
+
+        $('.editBtn', row).onclick = ()=> editPerson(item.id);
+        $('.payBtn', row).onclick = ()=> addPayment(item.id);
+
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderHistory(item){
+      if(!item.paid||!item.paid.length) return '<div class="muted">No payments yet.</div>';
+      return `<ul class="payments">${item.paid.map(p=>`<li><span>${fmt(p.amount,state.data.currency)} by ${p.by} <span class="muted">${new Date(p.date).toLocaleString()}</span></span><span>${p.note||''}</span></li>`).join('')}</ul>`;
+    }
+```html
+    function addPerson(){
+      const name = prompt('Person name?');
+      if(!name) return;
+      const initial = parseFloat(prompt('Initial amount?','0'))||0;
+      const item = { id: uid(), name, initial, paid:[] };
+      state.data.items.push(item);
+      state.data.updatedAt = nowISO();
+      saveData('Add person: '+name);
+      renderTable();
+    }
+
+    function editPerson(id){
+      const item = state.data.items.find(x=>x.id===id);
+      if(!item) return;
+      const name = prompt('Edit name:', item.name);
+      if(!name) return;
+      const initial = parseFloat(prompt('Edit initial amount:', item.initial))||0;
+      item.name = name;
+      item.initial = initial;
+      state.data.updatedAt = nowISO();
+      saveData('Edit person: '+name);
+      renderTable();
+    }
+
+    function addPayment(id){
+      const item = state.data.items.find(x=>x.id===id);
+      if(!item) return;
+      const amt = parseFloat(prompt('Payment amount?','0'))||0;
+      if(!amt) return;
+      const note = prompt('Note (optional):','')||'';
+      item.paid.push({ amount: amt, date: nowISO(), by: state.yourName||'?', note });
+      state.data.updatedAt = nowISO();
+      saveData('Add payment: '+item.name+' '+amt);
+      renderTable();
     }
 
     function startPolling(){
       if(state.polling) clearInterval(state.polling);
-      state.polling = setInterval(()=>{ refresh().catch(console.error); }, 10000); // 10 sn
-    }
-
-    // --------- Tablo Render ---------
-    function renderTable(){
-      const tbody = $('#tbody');
-      tbody.innerHTML = '';
-      const currency = state.data?.currency || state.currency || 'TRY';
-      for(const item of (state.data?.items||[])){
-        const row = document.importNode($('#rowTpl').content, true);
-        $('.name', row).textContent = item.name;
-        $('.id', row).textContent = item.id;
-        $('.initial', row).innerHTML = `<span class="pill amount-zero">${fmt(Number(item.initial||0), currency)}</span>`;
-        const { paid, remain } = calc(item);
-        $('.paid', row).innerHTML = `<span class="pill amount-pos">${fmt(paid, currency)}</span>`;
-        const cls = remain>0 ? 'amount-neg' : (remain<0 ? 'amount-pos' : 'amount-zero');
-        $('.remain', row).innerHTML = `<span class="pill ${cls}">${fmt(remain, currency)}</span>`;
-        const histDiv = $('.history', row);
-
-        $('.historyBtn', row).addEventListener('click', ()=>{
-          histDiv.classList.toggle('hidden');
-          if(!histDiv.classList.contains('hidden')){
-            renderHistory(histDiv, item, currency);
+      state.polling = setInterval(async ()=>{
+        try{
+          const res = await gh.getContents();
+          if(res.sha!==state.sha){
+            const newData = JSON.parse(res.content);
+            state.data = newData;
+            state.sha = res.sha;
+            renderTable();
+            $('#updatedTag').textContent = 'updated: ' + new Date().toLocaleTimeString();
           }
-        });
-        $('.payBtn', row).addEventListener('click', ()=> addPayment(item.id));
-        $('.editBtn', row).addEventListener('click', ()=> editItem(item.id));
-
-        tbody.appendChild(row);
-      }
-      $('#updatedTag').textContent = 'görüntü güncel';
+        }catch(e){ console.warn('Polling error', e); }
+      }, 10000);
     }
 
-    function renderHistory(container, item, currency){
-      const list = document.createElement('ul');
-      list.className = 'payments';
-      (item.paid||[]).slice().reverse().forEach(p=>{
-        const li = document.createElement('li');
-        const left = document.createElement('div');
-        left.innerHTML = `<b>${fmt(Number(p.amount||0), currency)}</b> <span class="ml8 muted">${new Date(p.date).toLocaleString('tr-TR')}</span>`;
-        const right = document.createElement('div');
-        right.innerHTML = `<span class="muted">${(p.by||'')}</span> ${p.note?`• ${p.note}`:''}`;
-        li.appendChild(left); li.appendChild(right);
-        list.appendChild(li);
-      });
-      if((item.paid||[]).length===0){
-        const li = document.createElement('div');
-        li.className = 'hint';
-        li.textContent = 'Henüz ödeme yok.';
-        container.innerHTML = ''; container.appendChild(li);
-      } else {
-        container.innerHTML = ''; container.appendChild(list);
-      }
-    }
-
-    // --------- İşlemler ---------
-    async function addPerson(){
-      if(!state.connected) return alert('Önce bağlanın.');
-      const name = prompt('Kişi adı?'); if(!name) return;
-      const initialStr = prompt('Başlangıç tutarı? (ör. 10000)'); if(initialStr==null) return;
-      const initial = Number(initialStr);
-      if(Number.isNaN(initial)) return alert('Geçersiz sayı.');
-      const it = { id: uid(), name, initial, paid: [] };
-      state.data.items.push(it);
-      await saveData(`Kişi eklendi: ${name}`);
-      renderTable();
-    }
-
-    async function editItem(id){
-      const it = state.data.items.find(x=>x.id===id); if(!it) return;
-      const name = prompt('Kişi adı', it.name) || it.name;
-      const initialStr = prompt('Başlangıç tutarı', String(it.initial));
-      if(initialStr==null) return; const initial = Number(initialStr);
-      if(Number.isNaN(initial)) return alert('Geçersiz sayı.');
-      it.name = name; it.initial = initial;
-      await saveData(`Kişi güncellendi: ${name}`);
-      renderTable();
-    }
-
-    async function addPayment(id){
-      if(!state.connected) return alert('Önce bağlanın.');
-      const it = state.data.items.find(x=>x.id===id); if(!it) return;
-      const amountStr = prompt(`${it.name} için ödeme tutarı?`); if(amountStr==null) return;
-      const amount = Number(amountStr); if(Number.isNaN(amount)||amount<=0) return alert('Geçersiz tutar.');
-      const note = prompt('Not (opsiyonel)') || '';
-      it.paid = it.paid || [];
-      it.paid.push({ amount, date: nowISO(), by: state.yourName || '', note });
-      await saveData(`Ödeme: ${it.name} -> ${amount}`);
-      renderTable();
-    }
-
-    async function changeCurrency(){
-      const cur = prompt('Para birimi (ISO, ör. TRY, USD, EUR)', state.data?.currency || state.currency || 'TRY');
-      if(!cur) return; state.currency = cur.toUpperCase();
-      state.data.currency = state.currency;
-      await saveData('Para birimi güncellendi: '+state.currency);
-      renderTable();
-    }
-
-    async function newList(){
-      if(!confirm('Yeni boş liste başlatılsın mı? Tüm mevcut veriler commit geçmişinde kalacak ama liste sıfırlanır.')) return;
+    // ---- Event bindings ----
+    $('#addPersonBtn').onclick = ()=> addPerson();
+    $('#newListBtn').onclick = ()=>{
+      if(!confirm('Start a new empty list?')) return;
       state.data = emptyData();
-      await saveData('Yeni liste başlatıldı');
+      saveData('Start new list');
       renderTable();
-    }
+    };
+    $('#refreshBtn').onclick = ()=> connect();
+    $('#changeCurrencyBtn').onclick = ()=>{
+      const cur = prompt('Currency code (ISO)?', state.data.currency||'USD');
+      if(!cur) return;
+      state.data.currency = cur;
+      saveData('Change currency to '+cur);
+      renderTable();
+    };
+    $('#connectBtn').onclick = ()=> connect();
+    $('#saveSettingsBtn').onclick = ()=> saveSettings();
+    $('#clearSettingsBtn').onclick = ()=>{ if(confirm('Clear local settings?')){ localStorage.clear(); location.reload(); } };
 
-    // --------- Etkinlikler ---------
-    $('#connectBtn').addEventListener('click', connect);
-    $('#saveSettingsBtn').addEventListener('click', saveSettings);
-    $('#clearSettingsBtn').addEventListener('click', ()=>{ localStorage.clear(); Object.assign(state,{owner:'',repo:'',branch:'main',dataPath:'data/payroll.json',currency:'TRY',yourName:'',token:''}); syncSettingsUI(); $('#status').textContent='Ayarlar temizlendi.'; });
-    $('#addPersonBtn').addEventListener('click', addPerson);
-    $('#changeCurrencyBtn').addEventListener('click', changeCurrency);
-    $('#refreshBtn').addEventListener('click', ()=> refresh().catch(err=>alert(err.message)) );
-    $('#newListBtn').addEventListener('click', newList);
-
-    // --------- Başlat ---------
+    // init
     syncSettingsUI();
+    if(state.owner && state.repo){
+      connect();
+    }
   </script>
 </body>
 </html>
+```
