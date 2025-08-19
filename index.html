@@ -1,306 +1,162 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Salary Tracker (GitHub Synced)</title>
+  <meta charset="UTF-8">
+  <title>Salary Tracker</title>
   <style>
-    :root { --bg:#0b1220; --card:#121a2b; --muted:#9fb0d1; --text:#e7eefc; --accent:#6da3ff; --ok:#2ecc71; --warn:#ffb020; --err:#ff5c5c; }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:linear-gradient(180deg,#0b1220,#0a0f1a); color:var(--text); }
-    header{ padding:20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-    h1{ font-size:20px; margin:0; letter-spacing:.2px; }
-    .chip{ font-size:12px; color:#cfe0ff; padding:4px 8px; background:#0e1a33; border:1px solid #1d2a44; border-radius:999px; }
-    main{ display:grid; grid-template-columns:340px 1fr; gap:18px; padding:18px; }
-    @media (max-width: 980px){ main{ grid-template-columns:1fr; } }
-    .card{ background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
-    .card h2{ margin:0 0 12px 0; font-size:16px; color:#d9e7ff; letter-spacing:.2px; }
-    .card .body{ padding:16px; }
-    label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
-    input, select, textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2a395b; background:#0f1728; color:var(--text); outline:none; }
-    input:focus, select:focus, textarea:focus{ border-color:#3756a8; box-shadow:0 0 0 3px rgba(61,109,227,.15); }
-    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .btn{ appearance:none; border:none; border-radius:10px; padding:10px 14px; color:#08101f; background:var(--accent); font-weight:600; cursor:pointer; }
-    .btn.secondary{ background:#1a2a4a; color:#d7e6ff; border:1px solid #2d3e64; }
-    .btn.ghost{ background:transparent; color:#cfe0ff; border:1px dashed #2d3e64; }
-    .btn.warn{ background:var(--warn); color:#0b1220; }
-    .btn.ok{ background:var(--ok); color:#061015; }
-    .btn:disabled{ opacity:.6; cursor:not-allowed; }
-    .toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; }
-    .status{ font-size:12px; color:var(--muted); margin-left:auto; }
-
-    table{ width:100%; border-collapse:collapse; }
-    th, td{ padding:12px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; }
-    th{ font-size:12px; color:#c6d6f7; text-transform:uppercase; letter-spacing:.6px; }
-    td .muted{ color:var(--muted); font-size:13px; }
-    .pill{ padding:4px 8px; border-radius:999px; font-size:12px; display:inline-block; }
-    .amount-pos{ background:#0f2a1b; color:#7ff0b0; border:1px solid #245d3f; }
-    .amount-neg{ background:#2a1515; color:#ffb5b5; border:1px solid #5d2424; }
-    .amount-zero{ background:#1f2637; color:#cfe0ff; border:1px solid #2f3a59; }
-
-    details{ background:#0e1729; border:1px solid #1c2947; border-radius:10px; padding:8px 12px; }
-    summary{ cursor:pointer; color:#cfe0ff; }
-    .payments{ margin-top:8px; }
-    .payments li{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.08); }
-    .payments li:last-child{ border-bottom:none; }
-
-    .hint{ font-size:12px; color:var(--muted); margin-top:8px; }
-    .oktxt{ color:#8ff7be; }
-    .errtxt{ color:#ffacac; }
-    .foot{ padding:10px 16px; font-size:12px; color:#a9b8d8; border-top:1px solid rgba(255,255,255,.06); display:flex; gap:8px; align-items:center; }
-    .tag{ background:#14213a; color:#bfd2ff; padding:4px 8px; border-radius:999px; border:1px solid #223459; font-size:11px; }
-    .ml8{ margin-left:8px; }
-    .mr8{ margin-right:8px; }
-    .hidden{ display:none !important; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    .btn { margin: 4px; padding: 6px 10px; }
+    details { margin-top: 20px; }
+    .hidden { display: none; }
+    .muted { color: #888; font-size: 0.9em; }
+    .pill { padding: 2px 6px; border-radius: 8px; }
+    .amount-neg { background: #fdd; }
+    .amount-pos { background: #dfd; }
+    .amount-zero { background: #eee; }
+    ul.payments { list-style: none; padding-left: 0; }
+    ul.payments li { margin-bottom: 4px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>💼 Salary Tracker — GitHub Synced</h1>
-    <span class="chip">Two users real-time view</span>
-    <span class="chip">Change history = commit</span>
-  </header>
 
-  <main>
-    <!-- SETTINGS -->
-    <section class="card" id="settingsCard">
-      <div class="body">
-        <h2>🔧 Connection & Security</h2>
-        <div class="row">
-          <div>
-            <label>GitHub Owner (user/organization)</label>
-            <input id="owner" placeholder="e.g. saruhan" />
-          </div>
-          <div>
-            <label>Repository Name</label>
-            <input id="repo" placeholder="e.g. salary-tracker" />
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Branch</label>
-            <input id="branch" placeholder="main" />
-          </div>
-          <div>
-            <label>Data File Path</label>
-            <input id="dataPath" placeholder="data/payroll.json" />
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Currency (ISO)</label>
-            <input id="currency" placeholder="TRY" />
-          </div>
-          <div>
-            <label>Your Name (for payment records)</label>
-            <input id="yourName" placeholder="e.g. Saruhan" />
-          </div>
-        </div>
-        <label>GitHub Token (fine-grained, only this repo, Contents: Read/Write)</label>
-        <input id="token" type="password" placeholder="ghp_..." />
-        <div class="toolbar" style="margin-top:12px;">
-          <button class="btn" id="connectBtn">Connect / Reconnect</button>
-          <button class="btn secondary" id="saveSettingsBtn">Save Settings</button>
-          <button class="btn ghost" id="clearSettingsBtn">Clear Settings</button>
-          <span class="status" id="status">Ready</span>
-        </div>
-        <p class="hint">⚠️ Token is stored in your <b>localStorage</b> and <b>never</b> written to the repo. For security, use a repo-specific, limited-scope <i>fine-grained</i> token.</p>
-      </div>
-    </section>
+  <h2>💰 Salary List</h2>
+  <table id="salaryTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>ID</th>
+        <th>Initial</th>
+        <th>Paid</th>
+        <th>Remain</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
 
-    <!-- MAIN APP -->
-    <section class="card">
-      <div class="body">
-        <h2>📋 Salary List</h2>
-        <div class="toolbar">
-          <button class="btn" id="addPersonBtn">Add Person</button>
-          <button class="btn secondary" id="changeCurrencyBtn">Change Currency</button>
-          <button class="btn secondary" id="refreshBtn">Refresh</button>
-          <button class="btn warn" id="newListBtn">Start New List</button>
-          <span class="status" id="dataInfo">Not connected</span>
-        </div>
+  <button id="addPersonBtn" class="btn">➕ Add Person</button>
+  <button id="newListBtn" class="btn">🆕 New List</button>
+  <button id="refreshBtn" class="btn">🔄 Refresh</button>
+  <button id="changeCurrencyBtn" class="btn">💱 Change Currency</button>
 
-        <div id="tableWrap">
-          <table id="payrollTable">
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Initial</th>
-                <th>Paid</th>
-                <th>Remaining</th>
-                <th style="width:220px">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
-
-        <p class="hint">Operations are written to GitHub as <span class="oktxt">commits</span>. Other user will see changes in ~10s automatically, or instantly by pressing "Refresh".</p>
-      </div>
-      <div class="foot">
-        <span class="tag" id="connectStateTag">Not connected</span>
-        <span class="tag" id="shaTag">sha: —</span>
-        <span class="tag" id="updatedTag">not updated</span>
-      </div>
-    </section>
-  </main>
+  <details>
+    <summary>⚙️ Connection & Security (click to expand)</summary>
+    <div>
+      <label>Owner: <input id="ownerInput"></label><br>
+      <label>Repo: <input id="repoInput"></label><br>
+      <label>Branch: <input id="branchInput" value="main"></label><br>
+      <label>Data File Path: <input id="pathInput" value="payroll.json"></label><br>
+      <label>Your Name: <input id="nameInput"></label><br>
+      <label>GitHub Token: <input id="tokenInput" type="password"></label><br>
+      <button id="connectBtn" class="btn">🔌 Connect</button>
+      <button id="saveSettingsBtn" class="btn">💾 Save Settings</button>
+      <button id="clearSettingsBtn" class="btn">🗑️ Clear Settings</button>
+      <div id="status"></div>
+      <div id="shaTag"></div>
+      <div id="updatedTag"></div>
+    </div>
+  </details>
 
   <template id="rowTpl">
     <tr>
-      <td>
-        <div><b class="name"></b></div>
-        <div class="muted">ID: <span class="id"></span></div>
-      </td>
+      <td class="name"></td>
+      <td class="id"></td>
       <td class="initial"></td>
       <td class="paid"></td>
       <td class="remain"></td>
       <td>
-        <div class="toolbar">
-          <button class="btn ok payBtn">Add Payment</button>
-          <button class="btn secondary historyBtn">History</button>
-          <button class="btn ghost editBtn">Edit</button>
-        </div>
-        <div class="history hidden"></div>
+        <button class="editBtn btn">✏️ Edit</button>
+        <button class="payBtn btn">💵 Pay</button>
+        <button class="historyBtn btn">📜 History</button>
       </td>
+      <td colspan="6" class="history hidden"></td>
     </tr>
   </template>
 
   <script>
-    // --------- Helpers ---------
-    const $ = (sel, el=document) => el.querySelector(sel);
-    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+    const $ = (sel, el=document)=>el.querySelector(sel);
+    const $$ = (sel, el=document)=>[...el.querySelectorAll(sel)];
+    const state = { data: { items:[], currency:'USD', updatedAt:'' }, sha:null, polling:null };
 
-    function toBase64(str){
-      const bytes = new TextEncoder().encode(str);
-      let bin = '';
-      bytes.forEach(b => bin += String.fromCharCode(b));
-      return btoa(bin);
-    }
-    function fromBase64(b64){
-      const bin = atob(b64);
-      const bytes = new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-      return new TextDecoder().decode(bytes);
-    }
-    const fmt = (n, currency) => new Intl.NumberFormat('en-US', { style:'currency', currency: currency||'USD', maximumFractionDigits:2 }).format(n||0);
-    const uid = () => 'id_' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
-    const nowISO = () => new Date().toISOString();
-
-    // --------- State ---------
-    const state = {
-      owner: localStorage.getItem('mt_owner') || '',
-      repo: localStorage.getItem('mt_repo') || '',
-      branch: localStorage.getItem('mt_branch') || 'main',
-      dataPath: localStorage.getItem('mt_dataPath') || 'data/payroll.json',
-      currency: localStorage.getItem('mt_currency') || 'USD',
-      yourName: localStorage.getItem('mt_yourName') || '',
-      token: localStorage.getItem('mt_token') || '',
-      sha: null,
-      data: null,
-      polling: null,
-      connected: false,
-    };
-
-    // --------- UI init ---------
-    function syncSettingsUI(){
-      $('#owner').value = state.owner;
-      $('#repo').value = state.repo;
-      $('#branch').value = state.branch;
-      $('#dataPath').value = state.dataPath;
-      $('#currency').value = state.currency;
-      $('#yourName').value = state.yourName;
-      $('#token').value = state.token;
-    }
-    function readSettingsFromUI(){
-      state.owner = $('#owner').value.trim();
-      state.repo = $('#repo').value.trim();
-      state.branch = $('#branch').value.trim() || 'main';
-      state.dataPath = $('#dataPath').value.trim() || 'data/payroll.json';
-      state.currency = $('#currency').value.trim() || 'USD';
-      state.yourName = $('#yourName').value.trim();
-      state.token = $('#token').value.trim();
-    }
-    function saveSettings(){
-      readSettingsFromUI();
-      localStorage.setItem('mt_owner', state.owner);
-      localStorage.setItem('mt_repo', state.repo);
-      localStorage.setItem('mt_branch', state.branch);
-      localStorage.setItem('mt_dataPath', state.dataPath);
-      localStorage.setItem('mt_currency', state.currency);
-      localStorage.setItem('mt_yourName', state.yourName);
-      if(state.token) localStorage.setItem('mt_token', state.token);
-      $('#status').textContent = 'Settings saved.';
-    }
-
-    // --------- GitHub API ---------
-    const gh = {
-      async getContents(){
-        const url = `https://api.github.com/repos/${state.owner}/${state.repo}/contents/${state.dataPath}?ref=${encodeURIComponent(state.branch)}`;
-        const r = await fetch(url, { headers: { 'Accept':'application/vnd.github+json', 'Authorization': state.token ? `Bearer ${state.token}` : undefined } });
-        if(r.status === 404) return { notFound:true };
-        if(!r.ok){ throw new Error('GET content error: '+r.status+' '+(await r.text())); }
-        const js = await r.json();
-        return { content: fromBase64(js.content), sha: js.sha };
-      },
-      async putContents(newContent, message, prevSha){
-        const url = `https://api.github.com/repos/${state.owner}/${state.repo}/contents/${state.dataPath}`;
-        const body = { message, content: toBase64(newContent), branch: state.branch };
-        if(prevSha) body.sha = prevSha;
-        const r = await fetch(url, { method:'PUT', headers:{ 'Accept':'application/vnd.github+json', 'Authorization': `Bearer ${state.token}` }, body: JSON.stringify(body) });
-        if(!r.ok){ throw new Error('PUT content error: '+r.status+' '+(await r.text())); }
-        const js = await r.json();
-        return { sha: js.content.sha, commit: js.commit.sha };
-      }
-    };
-
-    // --------- Data Model ---------
-    function emptyData(){
-      return {
-        version: 1,
-        currency: state.currency || 'USD',
-        updatedAt: nowISO(),
-        items: [] // { id, name, initial, paid:[{amount,date,by,note}] }
-      };
-    }
+    function uid(){ return Math.random().toString(36).slice(2,9); }
+    function nowISO(){ return new Date().toISOString(); }
+    function fmt(n,c){ return (n||0).toLocaleString(undefined,{style:'currency',currency:c}); }
     function calc(item){
-      const paid = (item.paid||[]).reduce((s,x)=>s+Number(x.amount||0),0);
-      const remain = Number(item.initial||0) - paid;
-      return { paid, remain };
+      const paid = (item.paid||[]).reduce((a,b)=>a+b.amount,0);
+      return { paid, remain: item.initial - paid };
     }
 
+    class GH {
+      constructor(owner, repo, branch, path, token){
+        this.owner=owner; this.repo=repo; this.branch=branch; this.path=path; this.token=token;
+        this.api=`https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+      }
+      async getContents(){
+        const res = await fetch(this.api+`?ref=${this.branch}`, { headers:{ Authorization:`token ${this.token}` } });
+        if(!res.ok) throw new Error('Get failed '+res.status);
+        const json = await res.json();
+        return { sha:json.sha, content: JSON.parse(atob(json.content.replace(/\n/g,''))) };
+      }
+      async putContents(text,message,sha){
+        const res = await fetch(this.api,{
+          method:'PUT',
+          headers:{ Authorization:`token ${this.token}`,'Content-Type':'application/json' },
+          body: JSON.stringify({ message, branch:this.branch, content:btoa(text), sha })
+        });
+        if(!res.ok) throw new Error('Put failed '+res.status);
+        return await res.json();
+      }
+    }
+
+    function syncSettingsUI(){
+      $('#ownerInput').value = localStorage.owner||'';
+      $('#repoInput').value = localStorage.repo||'';
+      $('#branchInput').value = localStorage.branch||'main';
+      $('#pathInput').value = localStorage.path||'payroll.json';
+      $('#nameInput').value = localStorage.yourName||'';
+      $('#tokenInput').value = localStorage.token||'';
+    }
+
+    function saveSettings(){
+      localStorage.owner=$('#ownerInput').value.trim();
+      localStorage.repo=$('#repoInput').value.trim();
+      localStorage.branch=$('#branchInput').value.trim();
+      localStorage.path=$('#pathInput').value.trim();
+      localStorage.yourName=$('#nameInput').value.trim();
+      localStorage.token=$('#tokenInput').value.trim();
+      alert('Settings saved.');
+    }
+
+    let gh;
     async function connect(){
-      readSettingsFromUI();
-      if(!state.owner || !state.repo){ $('#status').textContent = 'Owner and repo required.'; return; }
-      $('#status').textContent = 'Connecting…';
-      try{
-        const res = await gh.getContents();
-        if(res.notFound){
-          const data = emptyData();
-          const { sha } = await gh.putContents(JSON.stringify(data, null, 2), 'Initialize salary list', undefined);
-          state.data = data; state.sha = sha; state.connected = true;
-        } else {
-          state.data = JSON.parse(res.content); state.sha = res.sha; state.connected = true;
-          if(state.data.currency) { state.currency = state.data.currency; $('#currency').value = state.currency; }
-        }
-        $('#status').textContent = 'Connected';
-        $('#connectStateTag').textContent = 'Connected';
-        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
-```html
-        $('#updatedTag').textContent = 'updated: ' + new Date().toLocaleTimeString();
-        renderTable();
-        startPolling();
-      } catch(e){
-        $('#status').textContent = 'Connect error: ' + e.message;
+      gbp{
+        state.owner=$('#ownerInput').value.trim();
+        state.repo=$('#repoInput').value.trim();
+        state.branch=$('#branchInput').value.trim();
+        state.path=$('#pathInput').value.trim();
+        state.yourName=$('#nameInput').value.trim();
+        const token=$('#tokenInput').value.trim();
+        gh=new GH(state.owner,state.repo,state.branch,state.path,token);
+        const { sha, content } = await gh.getContents();
+        state.sha=sha; state.data=content;
+        $('#shaTag').textContent='sha: '+(state.sha?.slice(0,7)||'—');
+        $('#updatedTag').textContent='updated: '+new Date().toLocaleTimeString();
+        renderTable(); startPolling();
+      }catch(e){
+        $('#status').textContent='Connect error: '+e.message;
         console.error(e);
       }
     }
 
     async function saveData(message){
-      try{
+      gbp{
         const { sha } = await gh.putContents(JSON.stringify(state.data,null,2), message, state.sha);
-        state.sha = sha;
-        $('#shaTag').textContent = 'sha: ' + (state.sha?.slice(0,7)||'—');
-        $('#updatedTag').textContent = 'updated: ' + new Date().toLocaleTimeString();
+        state.sha=sha;
+        $('#shaTag').textContent='sha: '+(state.sha?.slice(0,7)||'—');
+        $('#updatedTag').textContent='updated: '+new Date().toLocaleTimeString();
       }catch(e){
         alert('Save error: '+e.message);
         console.error(e);
@@ -308,34 +164,32 @@
     }
 
     function renderTable(){
-      const tbody = $('#tbody');
-      tbody.innerHTML = '';
-      (state.data.items||[]).forEach(item => {
-        const row = document.importNode($('#rowTpl').content, true);
-        $('.name', row).textContent = item.name;
-        $('.id', row).textContent = item.id;
-        const { paid, remain } = calc(item);
-        $('.initial', row).textContent = fmt(item.initial, state.data.currency);
-        $('.paid', row).textContent = fmt(paid, state.data.currency);
-        const remainCell = $('.remain', row);
-        remainCell.textContent = fmt(remain, state.data.currency);
+      const tbody=$('#tbody');
+      tbody.innerHTML='';
+      (state.data.items||[]).forEach(item=>{
+        const row=document.importNode($('#rowTpl').content,true);
+        $('.name',row).textContent=item.name;
+        $('.id',row).textContent=item.id;
+        const { paid, remain }=calc(item);
+        $('.initial',row).textContent=fmt(item.initial,state.data.currency);
+        $('.paid',row).textContent=fmt(paid,state.data.currency);
+        const remainCell=$('.remain',row);
+        remainCell.textContent=fmt(remain,state.data.currency);
         if(remain>0) remainCell.className='remain pill amount-neg';
         else if(remain<0) remainCell.className='remain pill amount-pos';
         else remainCell.className='remain pill amount-zero';
 
-        const histDiv = $('.history', row);
-        $('.historyBtn', row).onclick = ()=>{
+        const histDiv=$('.history',row);
+        $('.historyBtn',row).onclick=()=>{
           if(histDiv.classList.contains('hidden')){
-            histDiv.innerHTML = renderHistory(item);
+            histDiv.innerHTML=renderHistory(item);
             histDiv.classList.remove('hidden');
           }else{
             histDiv.classList.add('hidden');
           }
         };
-
-        $('.editBtn', row).onclick = ()=> editPerson(item.id);
-        $('.payBtn', row).onclick = ()=> addPayment(item.id);
-
+        $('.editBtn',row).onclick=()=>editPerson(item.id);
+        $('.payBtn',row).onclick=()=>addPayment(item.id);
         tbody.appendChild(row);
       });
     }
@@ -344,85 +198,180 @@
       if(!item.paid||!item.paid.length) return '<div class="muted">No payments yet.</div>';
       return `<ul class="payments">${item.paid.map(p=>`<li><span>${fmt(p.amount,state.data.currency)} by ${p.by} <span class="muted">${new Date(p.date).toLocaleString()}</span></span><span>${p.note||''}</span></li>`).join('')}</ul>`;
     }
-```html
+
     function addPerson(){
-      const name = prompt('Person name?');
-      if(!name) return;
-      const initial = parseFloat(prompt('Initial amount?','0'))||0;
-      const item = { id: uid(), name, initial, paid:[] };
+      const name=prompt('Person name?'); if(!name) return;
+      const initial=parseFloat(prompt('Initial amount?','0'))||0;
+      const item={id:uid(),name,initial,paid:[]};
       state.data.items.push(item);
-      state.data.updatedAt = nowISO();
+      state.data.updatedAt=nowISO();
       saveData('Add person: '+name);
       renderTable();
     }
 
     function editPerson(id){
-      const item = state.data.items.find(x=>x.id===id);
-      if(!item) return;
-      const name = prompt('Edit name:', item.name);
-      if(!name) return;
-      const initial = parseFloat(prompt('Edit initial amount:', item.initial))||0;
-      item.name = name;
-      item.initial = initial;
-      state.data.updatedAt = nowISO();
+      const item=state.data.items.find(x=>x.id===id); if(!item) return;
+      const name=prompt('Edit name:',item.name); if(!name) return;
+      const initial=parseFloat(prompt('Edit initial amount:',item.initial))||0;
+      item.name=name; item.initial=initial;
+      state.data.updatedAt=nowISO();
       saveData('Edit person: '+name);
       renderTable();
     }
 
     function addPayment(id){
-      const item = state.data.items.find(x=>x.id===id);
-      if(!item) return;
-      const amt = parseFloat(prompt('Payment amount?','0'))||0;
-      if(!amt) return;
-      const note = prompt('Note (optional):','')||'';
-      item.paid.push({ amount: amt, date: nowISO(), by: state.yourName||'?', note });
-      state.data.updatedAt = nowISO();
+      const item=state.data.items.find(x=>x.id===id); if(!item) return;
+      const amt=parseFloat(prompt('Payment amount?','0'))||0; if(!amt) return;
+      const note=prompt('Note (optional):','')||'';
+      item.paid.push({amount:amt,date:nowISO(),by:state.yourName||'?',note});
+      state.data.updatedAt=nowISO();
       saveData('Add payment: '+item.name+' '+amt);
       renderTable();
     }
 
     function startPolling(){
       if(state.polling) clearInterval(state.polling);
-      state.polling = setInterval(async ()=>{
-        try{
-          const res = await gh.getContents();
+      state.polling=setInterval(async()=>{
+        gbp{
+          const res=await gh.getContents();
           if(res.sha!==state.sha){
-            const newData = JSON.parse(res.content);
-            state.data = newData;
-            state.sha = res.sha;
+            state.data=res.content;
+            state.sha=res.sha;
             renderTable();
-            $('#updatedTag').textContent = 'updated: ' + new Date().toLocaleTimeString();
+            $('#updatedTag').textContent='updated: '+new Date().toLocaleTimeString();
           }
-        }catch(e){ console.warn('Polling error', e); }
-      }, 10000);
+        }catch(e){ console.warn('Polling error',e); }
+      },10000);
     }
 
-    // ---- Event bindings ----
-    $('#addPersonBtn').onclick = ()=> addPerson();
-    $('#newListBtn').onclick = ()=>{
-      if(!confirm('Start a new empty list?')) return;
-      state.data = emptyData();
-      saveData('Start new list');
-      renderTable();
-    };
-    $('#refreshBtn').onclick = ()=> connect();
-    $('#changeCurrencyBtn').onclick = ()=>{
-      const cur = prompt('Currency code (ISO)?', state.data.currency||'USD');
-      if(!cur) return;
-      state.data.currency = cur;
-      saveData('Change currency to '+cur);
-      renderTable();
-    };
-    $('#connectBtn').onclick = ()=> connect();
-    $('#saveSettingsBtn').onclick = ()=> saveSettings();
-    $('#clearSettingsBtn').onclick = ()=>{ if(confirm('Clear local settings?')){ localStorage.clear(); location.reload(); } };
+    $('#addPersonBtn').onclick=()=>addPerson();
+    $('#newListBtn').onclick=()=>{ if(confirm('Start a new empty list?')){ state.data={items:[],currency:'USD',updatedAt:nowISO()}; saveData('Start new list'); renderTable(); } };
+    $('#refreshBtn').onclick=()=>connect();
+    $('#changeCurrencyBtn').onclick=()=>{ const cur=prompt('Currency code (ISO)?',state.data.currency||'USD'); if(!cur) return; state.data.currency=cur; saveData('Change currency to '+cur); renderTable(); };
+    $('#connectBtn').onclick=()=>connect();
+    $('#saveSettingsBtn').onclick=()=>saveSettings();
+    $('#clearSettingsBtn').onclick=()=>{ if(confirm('Clear local settings?')){ localStorage.clear(); location.reload(); } };
 
-    // init
     syncSettingsUI();
-    if(state.owner && state.repo){
-      connect();
-    }
+    if(localStorage.owner&&localStorage.repo){ connect(); }
   </script>
+
 </body>
 </html>
-```
+<script>
+  // --- CONTINUED SCRIPT (PART 2) ---
+
+  function deletePerson(id){
+    if(!confirm('Delete this person?')) return;
+    state.data.items = state.data.items.filter(x=>x.id!==id);
+    state.data.updatedAt=nowISO();
+    saveData('Delete person');
+    renderTable();
+  }
+
+  function exportData(){
+    const blob = new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='payroll.json';
+    a.click();
+  }
+
+  function importData(evt){
+    const file=evt.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      gbp{
+        state.data=JSON.parse(reader.result);
+        state.data.updatedAt=nowISO();
+        saveData('Import data');
+        renderTable();
+      }catch(e){ alert('Invalid file'); }
+    };
+    reader.readAsText(file);
+  }
+
+  // Extra UI buttons for import/export
+  const exportBtn=document.createElement('button');
+  exportBtn.textContent='📤 Export';
+  exportBtn.className='btn';
+  exportBtn.onclick=()=>exportData();
+  document.body.insertBefore(exportBtn,$('#addPersonBtn'));
+
+  const importInput=document.createElement('input');
+  importInput.type='file';
+  importInput.className='hidden';
+  importInput.onchange=(e)=>importData(e);
+
+  const importBtn=document.createElement('button');
+  importBtn.textContent='📥 Import';
+  importBtn.className='btn';
+  importBtn.onclick=()=>importInput.click();
+  document.body.insertBefore(importBtn,$('#addPersonBtn'));
+  document.body.appendChild(importInput);
+
+  // Allow delete person action
+  document.addEventListener('click',e=>{
+    if(e.target.classList.contains('deleteBtn')){
+      const id=e.target.dataset.id;
+      deletePerson(id);
+    }
+  });
+<script>
+  // --- CONTINUED SCRIPT (PART 3) ---
+
+  function filterByName(){
+    const q = prompt('Search by name:');
+    if(!q) return renderTable();
+    const tbody=$('#tbody');
+    tbody.innerHTML='';
+    (state.data.items||[]).filter(x=>x.name.toLowerCase().includes(q.toLowerCase())).forEach(item=>{
+      const row=document.importNode($('#rowTpl').content,true);
+      $('.name',row).textContent=item.name;
+      $('.id',row).textContent=item.id;
+      const { paid, remain }=calc(item);
+      $('.initial',row).textContent=fmt(item.initial,state.data.currency);
+      $('.paid',row).textContent=fmt(paid,state.data.currency);
+      $('.remain',row).textContent=fmt(remain,state.data.currency);
+      tbody.appendChild(row);
+    });
+  }
+
+  const filterBtn=document.createElement('button');
+  filterBtn.textContent='🔍 Search';
+  filterBtn.className='btn';
+  filterBtn.onclick=()=>filterByName();
+  document.body.insertBefore(filterBtn,$('#addPersonBtn'));
+
+  // Local backup
+  function backupLocal(){
+    localStorage.backup=JSON.stringify(state.data);
+  }
+
+  function restoreLocal(){
+    if(!localStorage.backup){ alert('No backup'); return; }
+    state.data=JSON.parse(localStorage.backup);
+    renderTable();
+  }
+
+  const backupBtn=document.createElement('button');
+  backupBtn.textContent='💾 Backup Local';
+  backupBtn.className='btn';
+  backupBtn.onclick=()=>backupLocal();
+  document.body.insertBefore(backupBtn,$('#addPersonBtn'));
+
+  const restoreBtn=document.createElement('button');
+  restoreBtn.textContent='♻️ Restore Local';
+  restoreBtn.className='btn';
+  restoreBtn.onclick=()=>restoreLocal();
+  document.body.insertBefore(restoreBtn,$('#addPersonBtn'));
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown',e=>{
+    if(e.ctrlKey && e.key==='s'){ e.preventDefault(); saveData('Manual save'); }
+    if(e.ctrlKey && e.key==='f'){ e.preventDefault(); filterByName(); }
+  });
+
+  // End of extended script
+</script>
