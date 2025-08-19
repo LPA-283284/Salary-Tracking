@@ -18,7 +18,7 @@
   <table>
     <thead>
       <tr>
-        <th>Name</th><th>ID</th><th>Initial</th><th>Paid</th><th>Remain</th><th>Actions</th>
+        <th>Name</th><th>Initial</th><th>Paid</th><th>Remain</th><th>Actions</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -26,6 +26,7 @@
 
   <button id="addPersonBtn" class="btn">➕ Add Person</button>
   <button id="refreshBtn" class="btn">🔄 Refresh</button>
+  <button id="saveBtn" class="btn">💾 Save</button>
 
   <details>
     <summary>⚙️ Connection</summary>
@@ -42,7 +43,6 @@
   <template id="rowTpl">
     <tr>
       <td class="name"></td>
-      <td class="id"></td>
       <td class="initial"></td>
       <td class="paid"></td>
       <td class="remain"></td>
@@ -58,7 +58,6 @@ const $ = (s,el=document)=>el.querySelector(s);
 const state = { data:{items:[],currency:'USD'}, sha:null };
 let gh;
 
-function uid(){ return Math.random().toString(36).slice(2,9); }
 function fmt(n,c){ return (n||0).toLocaleString(undefined,{style:'currency',currency:c}); }
 function calc(item){ const paid=(item.paid||[]).reduce((a,b)=>a+b.amount,0); return {paid,remain:item.initial-paid}; }
 
@@ -67,7 +66,7 @@ class GH {
   get api(){ return `https://api.github.com/repos/${this.o}/${this.r}/contents/${this.p}`; }
   async get(){ const res=await fetch(this.api+`?ref=${this.b}`,{headers:{Authorization:`token ${this.t}`}}); 
     if(!res.ok) throw new Error(res.status); const j=await res.json(); 
-    return {sha:j.sha,content:JSON.parse(atob(j.content.replace(/\\n/g,'')))}; }
+    return {sha:j.sha,content:JSON.parse(atob(j.content.replace(/\n/g,'')))}; }
   async put(text,msg,sha){ 
     const res=await fetch(this.api,{method:'PUT',headers:{Authorization:`token ${this.t}`,'Content-Type':'application/json'}, 
       body:JSON.stringify({message:msg,branch:this.b,content:btoa(text),sha})}); 
@@ -97,13 +96,12 @@ function render(){
   state.data.items.forEach(item=>{
     const row=document.importNode($('#rowTpl').content,true);
     $('.name',row).textContent=item.name;
-    $('.id',row).textContent=item.id;
     const {paid,remain}=calc(item);
     $('.initial',row).textContent=fmt(item.initial,state.data.currency);
     $('.paid',row).textContent=fmt(paid,state.data.currency);
     $('.remain',row).textContent=fmt(remain,state.data.currency);
-    $('.editBtn',row).onclick=()=>edit(item.id);
-    $('.payBtn',row).onclick=()=>pay(item.id);
+    $('.editBtn',row).onclick=()=>edit(item);
+    $('.payBtn',row).onclick=()=>pay(item);
     tb.appendChild(row);
   });
 }
@@ -111,19 +109,17 @@ function render(){
 function addPerson(){
   const n=prompt('Name?'); if(!n) return;
   const init=parseFloat(prompt('Initial amount?','0'))||0;
-  state.data.items.push({id:uid(),name:n,initial:init,paid:[]});
+  state.data.items.push({name:n,initial:init,paid:[]});
   save('Add person '+n); render();
 }
 
-function edit(id){
-  const it=state.data.items.find(x=>x.id===id); if(!it) return;
+function edit(it){
   const n=prompt('Name:',it.name); if(!n) return;
   const init=parseFloat(prompt('Initial amount:',it.initial))||0;
   it.name=n; it.initial=init; save('Edit '+n); render();
 }
 
-function pay(id){
-  const it=state.data.items.find(x=>x.id===id); if(!it) return;
+function pay(it){
   const amt=parseFloat(prompt('Payment?','0'))||0; if(!amt) return;
   const note=prompt('Note:','')||'';
   it.paid.push({amount:amt,date:new Date().toISOString(),by:state.yourName,note});
@@ -133,6 +129,7 @@ function pay(id){
 $('#addPersonBtn').onclick=()=>addPerson();
 $('#refreshBtn').onclick=()=>connect();
 $('#connectBtn').onclick=()=>connect();
+$('#saveBtn').onclick=()=>save('Manual save');
 </script>
 </body>
 </html>
